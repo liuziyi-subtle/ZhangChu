@@ -27,8 +27,10 @@ if __name__ == "__main__":
     parser.add_argument("--visualization", default=False, action="store_true")
     args = parser.parse_args()
 
+    # 加载为数据集对象
     dataset_train, dataset_valid = datasets.get_dataset(
-        "/data/ufs/x-debug/seed/data/Soybean")
+        "/ufs/data/with-zhangchu/results/df_records_cotton.csv")
+    print(dataset_train)
 
     # model = CNN(32, 3, args.channels, 10, args.layers)
     # criterion = nn.CrossEntropyLoss()
