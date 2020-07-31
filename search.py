@@ -12,15 +12,19 @@ import datasets
 from model import CNN
 from nni.nas.pytorch.callbacks import ArchitectureCheckpoint, LRSchedulerCallback
 from nni.nas.pytorch.darts import DartsTrainer
-from utils import accuracy
+from utils import accuracy, init_logger
+from datetime import datetime
+
+logger_file_path = "/data/data/with-zhangchu/results/DartsTrainer-" + \
+    datetime.now().strftime("%m-%d-%Y-%I:%M:%S-%p") + ".log"
 
 logger = logging.getLogger('nni')
 
 # python3 -m debugpy --listen 0.0.0.0:5678 --wait-for-client ./search.py --batch-size 8 --epochs 5
 if __name__ == "__main__":
     parser = ArgumentParser("darts")
-    parser.add_argument("--layers", default=8, type=int)
-    parser.add_argument("--batch-size", default=64, type=int)
+    parser.add_argument("--layers", default=3, type=int)
+    parser.add_argument("--batch-size", default=128, type=int)
     parser.add_argument("--log-frequency", default=10, type=int)
     parser.add_argument("--epochs", default=50, type=int)
     parser.add_argument("--channels", default=16, type=int)
@@ -29,8 +33,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dataset_train, dataset_valid = datasets.get_dataset(
-        "/Users/liuziyi/Documents/ZJU/张初/results/df_records_cotton.csv")
-    print()
+        "/data/data/with-zhangchu/results/df_records_cotton_self_supervised.csv")
+
+    print(logger_file_path)
+    init_logger(logger_file_path, "nni.nas.pytorch.darts.trainer")
     # dataset_train.data = dataset_train.data[:128, :]
     # dataset_valid.data = dataset_valid.data[:128, :]
 
@@ -42,7 +48,9 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss()
 
     # 优化器
-    optim = torch.optim.SGD(model.parameters(), 0.025,
+    # optim = torch.optim.SGD(model.parameters(), 0.025,
+    #                         momentum=0.9, weight_decay=3.0E-4)
+    optim = torch.optim.SGD(model.parameters(), 0.001,
                             momentum=0.9, weight_decay=3.0E-4)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optim, args.epochs, eta_min=0.001)

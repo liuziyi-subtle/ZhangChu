@@ -4,6 +4,10 @@
 import torch
 import torch.nn as nn
 
+import logging
+
+logger = logging.getLogger('nni')
+
 
 class DropPath(nn.Module):
     def __init__(self, p=0.):
@@ -110,6 +114,7 @@ class DilConv(nn.Module):
         )
 
     def forward(self, x):
+        # logger.info("input size of x: {}".format(x.shape))
         return self.net(x)
 
 

@@ -6,6 +6,37 @@ import torch.nn as nn
 import ops
 from nni.nas.pytorch import mutables
 
+import logging
+
+logger = logging.getLogger('nni')
+
+
+class AuxiliaryHead(nn.Module):
+    """ Auxiliary head in 2/3 place of network to let the gradient flow well """
+
+    def __init__(self, input_size, C, n_classes):
+        """ assuming input size 7x7 or 8x8 """
+        assert input_size in [7, 8]
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.ReLU(inplace=True),
+            nn.AvgPool1d(5, stride=input_size - 5, padding=0,
+                         count_include_pad=False),  # 2x2 out
+            nn.Conv1d(C, 128, kernel_size=1, bias=False),
+            nn.BatchNorm1d(128),
+            nn.ReLU(inplace=True),
+            nn.Conv1d(128, 768, kernel_size=2, bias=False),  # 1x1 out
+            nn.BatchNorm1d(768),
+            nn.ReLU(inplace=True)
+        )
+        self.linear = nn.Linear(768, n_classes)
+
+    def forward(self, x):
+        out = self.net(x)
+        out = out.view(out.size(0), -1)  # flatten
+        logits = self.linear(out)
+        return logits
+
 
 class Node(nn.Module):
     def __init__(self, node_id, num_prev_nodes, channels, num_downsample_connect):
@@ -44,7 +75,15 @@ class Node(nn.Module):
         # 法不同.
         # out = [op(node) for op, node in zip(self.ops, prev_nodes)]
         out = []
+        ii = 0
         for op, node in zip(self.ops, prev_nodes):
+            logger.info("ii: {}".format(ii))
+            ii += 1
+            # logger.info("input size of node: {}".format(node.shape))
+            # if ii == 2:
+            # logger.info("node.shape: {}".format(node.shape))
+            prev_op = op
+            prev_node = node
             op_node = op(node)
             out.append(op_node)
         out = [self.drop_path(o) if o is not None else None for o in out]
@@ -84,6 +123,8 @@ class Cell(nn.Module):
         tensors = [self.preproc0(s0), self.preproc1(s1)]
 
         for node in self.mutable_ops:
+            for t in tensors:
+                logger.info("t.shape: {}".format(t.shape))
             cur_tensor = node(tensors)
             tensors.append(cur_tensor)
         # 注意：这里可以看出，最后一个node的作用就是汇聚cell中所有nodes的输出
@@ -138,8 +179,9 @@ class CNN(nn.Module):
             channels_pp, channels_p = channels_p, c_cur_out
 
             if i == self.aux_pos:
-                self.aux_head = AuxiliaryHead(
-                    input_size // 4, channels_p, n_classes)
+                # self.aux_head = AuxiliaryHead(
+                #     input_size // 4, channels_p, n_classes)
+                self.aux_head = AuxiliaryHead(8, channels_p, n_classes)
         # 在最后一个cell的输出后，增加了一个池化层和一个线性分类器
         # self.gap = nn.AdaptiveAvgPool2d(1)
         self.gap = nn.AdaptiveAvgPool1d(1)
@@ -150,8 +192,8 @@ class CNN(nn.Module):
 
         aux_logits = None
         for i, cell in enumerate(self.cells):
-          # 每一个cell都会输出一个新的s1，并结合其上一个cell的输出s0一起，作为下一个cell
-          # 的输入
+            # 每一个cell都会输出一个新的s1，并结合其上一个cell的输出s0一起
+            # 作为下一个cell的输入
             s0, s1 = s1, cell(s0, s1)
             if i == self.aux_pos and self.training:
                 aux_logits = self.aux_head(s1)
