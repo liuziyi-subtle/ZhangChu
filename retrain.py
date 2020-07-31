@@ -115,7 +115,7 @@ def validate(config, valid_loader, model, criterion, epoch, cur_step):
 if __name__ == "__main__":
     parser = ArgumentParser("darts")
     parser.add_argument("--layers", default=20, type=int)
-    parser.add_argument("--batch-size", default=128, type=int)
+    parser.add_argument("--batch-size", default=32, type=int)
     parser.add_argument("--log-frequency", default=10, type=int)
     parser.add_argument("--epochs", default=5, type=int)
     parser.add_argument("--aux-weight", default=0.4, type=float)
@@ -123,20 +123,20 @@ if __name__ == "__main__":
     parser.add_argument("--workers", default=4)
     parser.add_argument("--grad-clip", default=5., type=float)
     parser.add_argument("--arc-checkpoint",
-                        default="/data/workspace/with-zhangchu/soybean-and-cotton/checkpoints/epoch_20.json")
+                        default="./checkpoints/epoch_20.json")
 
     args = parser.parse_args()
 
-    logger_file_path = "/data/data/with-zhangchu/results/DartsTrainer-" + \
-        datetime.now().strftime("%m-%d-%Y-%I:%M:%S-%p") + ".log"
-    init_logger(logger_file_path, "nni")
+    # logger_file_path = "/data/data/with-zhangchu/results/DartsTrainer-" + \
+    #     datetime.now().strftime("%m-%d-%Y-%I:%M:%S-%p") + ".log"
+    # init_logger(logger_file_path, "nni")
 
     # dataset_train, dataset_valid = datasets.get_dataset(
     #     "cifar10", cutout_length=16)
     dataset_train, dataset_valid = datasets.get_dataset(
-        "/data/data/with-zhangchu/results/df_records_cotton_self_supervised.csv")
-    dataset_train.data = dataset_train.data[:512, :]
-    dataset_train.data = dataset_train.data[:512, :]
+        "./df_records_cotton_self_supervised.csv")
+    dataset_train.data = dataset_train.data[:64, :]
+    dataset_train.data = dataset_train.data[:64, :]
 
     # model = CNN(32, 3, 36, 10, args.layers, auxiliary=True)
     model = CNN(200, 1, 36, 7, args.layers, auxiliary=False)

@@ -26,8 +26,10 @@ class DropPath(nn.Module):
         if self.training and self.p > 0.:
             keep_prob = 1. - self.p
             # per data point mask
-            mask = torch.zeros((x.size(0), 1, 1, 1),
-                               device=x.device).bernoulli_(keep_prob)
+            # mask = torch.zeros((x.size(0), 1, 1, 1),
+            #                    device=x.device).bernoulli_(keep_prob)
+            mask = torch.zeros((x.size(0), 1, 1),
+                               device=x.device).bernoulli_(keep_prob)  # 只有3个维度.
             return x / keep_prob * mask
 
         return x
