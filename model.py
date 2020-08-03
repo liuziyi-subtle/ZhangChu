@@ -75,15 +75,15 @@ class Node(nn.Module):
         # 法不同.
         # out = [op(node) for op, node in zip(self.ops, prev_nodes)]
         out = []
-        ii = 0
+        # ii = 0
         for op, node in zip(self.ops, prev_nodes):
-            logger.info("ii: {}".format(ii))
-            ii += 1
+            # logger.info("ii: {}".format(ii))
+            # ii += 1
             # logger.info("input size of node: {}".format(node.shape))
             # if ii == 2:
             # logger.info("node.shape: {}".format(node.shape))
-            prev_op = op
-            prev_node = node
+            # prev_op = op
+            # prev_node = node
             op_node = op(node)
             out.append(op_node)
         out = [self.drop_path(o) if o is not None else None for o in out]
@@ -123,8 +123,8 @@ class Cell(nn.Module):
         tensors = [self.preproc0(s0), self.preproc1(s1)]
 
         for node in self.mutable_ops:
-            for t in tensors:
-                logger.info("t.shape: {}".format(t.shape))
+            # for t in tensors:
+            #     logger.info("t.shape: {}".format(t.shape))
             cur_tensor = node(tensors)
             tensors.append(cur_tensor)
         # 注意：这里可以看出，最后一个node的作用就是汇聚cell中所有nodes的输出

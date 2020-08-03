@@ -115,28 +115,28 @@ def validate(config, valid_loader, model, criterion, epoch, cur_step):
 if __name__ == "__main__":
     parser = ArgumentParser("darts")
     parser.add_argument("--layers", default=20, type=int)
-    parser.add_argument("--batch-size", default=32, type=int)
+    parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--log-frequency", default=10, type=int)
-    parser.add_argument("--epochs", default=5, type=int)
+    parser.add_argument("--epochs", default=50, type=int)
     parser.add_argument("--aux-weight", default=0.4, type=float)
     parser.add_argument("--drop-path-prob", default=0.2, type=float)
     parser.add_argument("--workers", default=4)
     parser.add_argument("--grad-clip", default=5., type=float)
     parser.add_argument("--arc-checkpoint",
-                        default="./checkpoints/epoch_20.json")
+                        default="/data/workspace/with-zhangchu/soybean-and-cotton/checkpoints/epoch_20.json")
 
     args = parser.parse_args()
 
-    # logger_file_path = "/data/data/with-zhangchu/results/DartsTrainer-" + \
-    #     datetime.now().strftime("%m-%d-%Y-%I:%M:%S-%p") + ".log"
-    # init_logger(logger_file_path, "nni")
+    logger_file_path = "/data/data/with-zhangchu/results/DartsTrainer-" + \
+        datetime.now().strftime("%m-%d-%Y-%I:%M:%S-%p") + ".log"
+    init_logger(logger_file_path, "nni")
 
     # dataset_train, dataset_valid = datasets.get_dataset(
     #     "cifar10", cutout_length=16)
     dataset_train, dataset_valid = datasets.get_dataset(
-        "./df_records_cotton_self_supervised.csv")
-    dataset_train.data = dataset_train.data[:64, :]
-    dataset_train.data = dataset_train.data[:64, :]
+        "/data/data/with-zhangchu/results/df_records_cotton_self_supervised.csv")
+    # dataset_train.data = dataset_train.data[:64, :]
+    # dataset_train.data = dataset_train.data[:64, :]
 
     # model = CNN(32, 3, 36, 10, args.layers, auxiliary=True)
     model = CNN(200, 1, 36, 7, args.layers, auxiliary=False)
@@ -172,9 +172,12 @@ if __name__ == "__main__":
 
         # validation
         cur_step = (epoch + 1) * len(train_loader)
-        # top1 = validate(args, valid_loader, model, criterion, epoch, cur_step)
-        # best_top1 = max(best_top1, top1)
+        top1 = validate(args, valid_loader, model, criterion, epoch, cur_step)
+        best_top1 = max(best_top1, top1)
 
         lr_scheduler.step()
+
+        # 保存模型
+        torch.save(model, "./model_20200803.model")
 
     logger.info("Final best Prec@1 = {:.4%}".format(best_top1))
