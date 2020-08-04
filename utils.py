@@ -1,6 +1,5 @@
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) Liu Ziyi.
 # Licensed under the MIT license.
-
 
 from datetime import datetime
 import time
@@ -55,29 +54,47 @@ class _LoggerFileWrapper(TextIOBase):
         return len(s)
 
 
-def init_logger(logger_file_path, logger_name, log_level_name='info'):
-    """Initialize root logger.
-    This will redirect anything from logging.getLogger() as well as stdout to specified file.
-    logger_file_path: path of logger file (path-like object).
+def init_logger(log_filepath, log_level_name='info'):
+    """Initialize logger.
+    This will redirect anything from logging.getLogger() as 
+    well as stdout to specified file. logger_file_path: path 
+    of logger file (path-like object).
     """
     log_level = log_level_map.get(log_level_name, logging.INFO)
-    logger_file = open(logger_file_path, 'w')
+    log_file = open(log_filepath, 'w')
     fmt = '[%(asctime)s] %(levelname)s (%(name)s/%(threadName)s) %(message)s'
     logging.Formatter.converter = time.localtime
     formatter = logging.Formatter(fmt, _time_format)
-    handler = logging.StreamHandler(logger_file)
+    handler = logging.StreamHandler(log_file)
     handler.setFormatter(formatter)
 
-    root_logger = logging.getLogger(logger_name)  # nni中是使用的root
+    root_logger = logging.getLogger()  # nni中是使用的root
     root_logger.addHandler(handler)
     root_logger.setLevel(log_level)
 
-    # these modules are too verbose
-    # logging.getLogger('matplotlib').setLevel(log_level)
+    # 继承TextIOBase并重写write()函数
+    sys.stdout = _LoggerFileWrapper(log_file)
 
-    sys.stdout = _LoggerFileWrapper(logger_file)
 
-# check data
+def init_standalone_logger(logger_name):
+    """
+    Initialize root logger for standalone mode.
+    This will set NNI's log level to INFO and print its log to stdout.
+    """
+    fmt = '[%(asctime)s] %(levelname)s (%(name)s) %(message)s'
+    formatter = logging.Formatter(fmt, _time_format)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+    standalone_logger = logging.getLogger(logger_name)
+    standalone_logger.addHandler(handler)
+    standalone_logger.setLevel(logging.INFO)
+    standalone_logger.propagate = False
+
+    # Following line does not affect NNI loggers, but without this user's logger won't be able to
+    # print log even it's level is set to INFO, so we do it for user's convenience.
+    # If this causes any issue in future, remove it and use `logging.info` instead of
+    # `logging.getLogger('xxx')` in all examples.
+    logging.basicConfig()
 
 
 def plot_matrix(mat, axis, title):

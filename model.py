@@ -5,10 +5,11 @@ import torch.nn as nn
 
 import ops
 from nni.nas.pytorch import mutables
+import os
 
 import logging
 
-logger = logging.getLogger('nni')
+logger = logging.getLogger(__name__)
 
 
 class AuxiliaryHead(nn.Module):
@@ -124,7 +125,7 @@ class Cell(nn.Module):
 
         for node in self.mutable_ops:
             # for t in tensors:
-            #     logger.info("t.shape: {}".format(t.shape))
+            # logger.info("-")
             cur_tensor = node(tensors)
             tensors.append(cur_tensor)
         # 注意：这里可以看出，最后一个node的作用就是汇聚cell中所有nodes的输出

@@ -15,7 +15,7 @@ class SEED():
         # TODO: 根据dataset的格式确定不同的组织方式, 最终汇聚成torch公用的格式.
         # 目前, 是按照df_objects的格式读取.
         self.data = raw[[c for c in raw.columns if "band" in c]].values
-        self.targets = raw["subtype"].values  # trans_type
+        self.targets = raw["trans_type"].values  # subtype
         self.classes = np.unique(self.targets)
         self.class_to_idx = {_class: i for i,
                              _class in enumerate(self.classes)}
