@@ -1,27 +1,18 @@
 from torchvision import transforms
 from seed import SEED
 import pandas as pd
+from simclr.transformations import TransformsSimCLR
 
 
-def get_dataset(path):
+def get_dataset(path, name=None, pretrain=False):
+    """ load dataset.
     """
-    1. 加载数据集为ndarray格式
-    2. 添加transforms
-    """
-    # MEAN = []
-    # STD = []
-    # normalize = [
-    #     transforms.ToTensor(),
-    #     # transforms.Normalize(MEAN, STD)
-    # ]
-    # coutout = []
-    # if cutout_length > 0:
-    #     coutout.append(Cutout(coutout_length))
-
-    # train_transform = transforms.Compose(transf, normalize, cutout)
-    # valid_transform = transforms.Compose(normalize)
-
-    dataset_train = SEED(path, train=True)
+    # TODO: select dataset according to name.
+    transform = TransformsSimCLR()
+    dataset_train = SEED(path, train=True, transform=transform)
     dataset_valid = SEED(path, train=False)
+
+    if pretrain:
+        return dataset_train
 
     return dataset_train, dataset_valid
